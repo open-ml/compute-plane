@@ -59,8 +59,35 @@ spec:
                 secretKeyRef:
                   name: {{ include "compute-plane.service-api-key.name" . }}
                   key: serviceApiKey
+            {{- if .Values.localDevelopment.enabled }}
+            - name: LOCAL
+              value: "true"
+            {{- end }}
           resources:
             {{- toYaml .Values.jwtRefresh.containers.jwtRefresh.resources | nindent 12 }}
+          {{- if .Values.localDevelopment.enabled}}
+          command: ["go", "run", "jwt_refresh/cmd/main.go"]
+          workingDir: /go/mcloud
+          volumeMounts:
+            - name: local-mcloud
+              mountPath: /go/mcloud
+            - name: local-go-build-cache
+              mountPath: /root/.cache
+            - name: local-go-pkg-cache
+              mountPath: /go/pkg
+          {{- end }}
+      {{- if .Values.localDevelopment.enabled }}
+      volumes:
+        - name: local-mcloud
+          hostPath:
+            path: /mcloud
+        - name: local-go-build-cache
+          hostPath:
+            path: /go-build-cache
+        - name: local-go-pkg-cache
+          hostPath:
+            path: /go-pkg-cache
+      {{- end }}
       {{- with .Values.jwtRefresh.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}

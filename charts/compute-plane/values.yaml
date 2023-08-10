@@ -308,3 +308,8 @@ jwtRefresh:
   # Priority class for the jwtRefresh Pod.
   # See: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
   priorityClassName: ""
+
+# Configuration for local development of the Compute Plane. This is intended for
+# internal use only.
+localDevelopment:
+  enabled: false

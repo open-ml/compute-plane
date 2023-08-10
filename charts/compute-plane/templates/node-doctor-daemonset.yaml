@@ -57,15 +57,42 @@ spec:
               value: {{ .Values.nodeDoctor.refreshRateMs | quote }}
             - name: JWT_FILEPATH
               value: /mnt/jwtRefresh/accessToken
+            {{- if .Values.localDevelopment.enabled }}
+            - name: LOCAL
+              value: "true"
+            {{- end }}
           resources:
             {{- toYaml .Values.nodeDoctor.containers.nodeDoctor.resources | nindent 12 }}
           volumeMounts:
             - name: service-jwt
               mountPath: /mnt/jwtRefresh
+            {{- if .Values.localDevelopment.enabled }}
+            - name: local-mcloud
+              mountPath: /go/mcloud
+            - name: local-go-build-cache
+              mountPath: /root/.cache
+            - name: local-go-pkg-cache
+              mountPath: /go/pkg
+            {{- end }}
+          {{- if .Values.localDevelopment.enabled }}
+          command: ["go", "run", "node_doctor/cmd/main.go"]
+          workingDir: /go/mcloud
+          {{- end }}
       volumes:
         - name: service-jwt
           secret:
             secretName: {{ include "compute-plane.service-jwt.name" . }}
+        {{- if .Values.localDevelopment.enabled }}
+        - name: local-mcloud
+          hostPath:
+            path: /mcloud
+        - name: local-go-build-cache
+          hostPath:
+            path: /go-build-cache
+        - name: local-go-pkg-cache
+          hostPath:
+            path: /go-pkg-cache
+        {{- end }}
       {{- with .Values.nodeDoctor.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}

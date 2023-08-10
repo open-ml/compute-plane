@@ -67,13 +67,40 @@ spec:
               value: {{ not .Values.worker.enableRunLogging | quote }}
             - name: DISABLE_MINT_AGENT
               value: {{ not .Values.worker.enableRunInteractivity | quote }}
+            {{- if .Values.localDevelopment.enabled }}
+            - name: LOCAL
+              value: "true"
+            {{- end }}
             {{- include "compute-plane.imagePullSecretsEnv" . | nindent 12 }}
           resources:
             {{- toYaml .Values.worker.containers.worker.resources | nindent 12 }}
           volumeMounts:
             - name: service-jwt
               mountPath: /mnt/jwtRefresh
+            {{- if .Values.localDevelopment.enabled }}
+            - name: local-mcloud
+              mountPath: /go/mcloud
+            - name: local-go-build-cache
+              mountPath: /root/.cache
+            - name: local-go-pkg-cache
+              mountPath: /go/pkg
+            {{- end }}
+          {{- if .Values.localDevelopment.enabled }}
+          command: ["go", "run", "worker/cmd/main.go"]
+          workingDir: /go/mcloud
+          {{- end }}
       volumes:
+        {{- if .Values.localDevelopment.enabled }}
+        - name: local-mcloud
+          hostPath:
+            path: /mcloud
+        - name: local-go-build-cache
+          hostPath:
+            path: /go-build-cache
+        - name: local-go-pkg-cache
+          hostPath:
+            path: /go-pkg-cache
+        {{- end }}
         - name: service-jwt
           secret:
             secretName: {{ include "compute-plane.service-jwt.name" . }}
