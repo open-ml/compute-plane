@@ -157,3 +157,32 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "jwt-refresh.service-account-annotations" -}}
 {{- deepCopy .Values.annotations | mustMerge .Values.jwtRefresh.rbac.serviceAccountAnnotations | toYaml }}
 {{- end }}
+
+{{/*
+MINT Agent
+*/}}
+{{- define "mint-agent.name" -}}
+{{- printf "%s-mint-agent" (include "compute-plane.name" .) }}
+{{- end }}
+
+{{- define "mint-agent.labels" -}}
+{{- include "compute-plane.labels" . }}
+app.kubernetes.io/name: {{ include "mint-agent.name" . }}
+{{- end }}
+
+{{- define "mint-agent.selector-labels" -}}
+app.kubernetes.io/name: {{ include "mint-agent.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "mint-agent.service-account-name" -}}
+{{- if .Values.mintAgent.rbac.create }}
+{{- include "mint-agent.name" . }}
+{{- else }}
+{{- .Values.mintAgent.rbac.serviceAccountName }}
+{{- end }}
+{{- end }}
+
+{{- define "mint-agent.service-account-annotations" -}}
+{{- deepCopy .Values.annotations | mustMerge .Values.mintAgent.rbac.serviceAccountAnnotations | toYaml }}
+{{- end }}

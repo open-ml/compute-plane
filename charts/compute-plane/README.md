@@ -109,14 +109,7 @@ And, if the `worker.rbac.allowNodeWrites` value is set to true, the Worker is pr
 | -------- | ----- |
 | nodes | update, patch |
 
-Runs submitted by the Worker are also provisioned with permissions, depending on configuration. If `worker.enableRunInteractivity` is set to true (enabled by default), the permissions are the following:
-
-| Resource | Verbs |
-| -------- | ----- |
-| pods | get |
-| pods/exec | create |
-
-Otherwise, if `worker.enableRunLogging` is set to true (enabled by default), the permissions are the following:
+Runs submitted by the Worker are also provisioned with permissions, depending on configuration. If `worker.enableRunLogging` is set to true (enabled by default), the permissions are the following:
 
 | Resource | Verbs |
 | -------- | ----- |

@@ -11,16 +11,11 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 rules:
-  {{- if or .Values.worker.enableRunLogging .Values.worker.enableRunInteractivity }}
+  {{- if .Values.worker.enableRunLogging }}
   - apiGroups: [ "" ]
     resources: [ "pods" ]
     verbs: [ "get" ]
   {{- else }}
   []
-  {{- end }}
-  {{- if .Values.worker.enableRunInteractivity }}
-  - apiGroups: [ "" ]
-    resources: [ "pods/exec" ]
-    verbs: [ "create" ]
   {{- end }}
 {{- end }}

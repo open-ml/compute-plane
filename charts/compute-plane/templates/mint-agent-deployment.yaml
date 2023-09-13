@@ -1,10 +1,11 @@
+{{- if .Values.mintAgent.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "worker.name" . }}
+  name: {{ include "mint-agent.name" . }}
   namespace: {{ include "main-namespace" . }}
   labels:
-    {{- include "worker.labels" . | nindent 4 }}
+    {{- include "mint-agent.labels" . | nindent 4 }}
   {{- with .Values.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -13,7 +14,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "worker.selector-labels" . | nindent 6 }}
+      {{- include "mint-agent.selector-labels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.annotations }}
@@ -21,59 +22,43 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "worker.selector-labels" . | nindent 8 }}
+        {{- include "mint-agent.selector-labels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "worker.service-account-name" . }}
+      serviceAccountName: {{ include "mint-agent.service-account-name" . }}
       securityContext:
-        {{- toYaml .Values.worker.securityContext | nindent 8 }}
-      {{- with .Values.worker.priorityClassName }}
+        {{- toYaml .Values.mintAgent.securityContext | nindent 8 }}
+      {{- with .Values.mintAgent.priorityClassName }}
       priorityClassName: {{ . | quote }}
       {{- end }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ include "mint-agent.name" . }}
           securityContext:
-            {{- toYaml .Values.worker.containers.worker.securityContext | nindent 12 }}
-          image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}"
-          imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
+            {{- toYaml .Values.mintAgent.containers.mintAgent.securityContext | nindent 12 }}
+          image: "{{ .Values.mintAgent.image.repository }}:{{ .Values.mintAgent.image.tag }}"
+          imagePullPolicy: {{ .Values.mintAgent.image.pullPolicy }}
           env:
             - name: HELM_VERSION
               value: {{ include "compute-plane.chart" . }}
-            - name: MORC_ADDR
-              value: {{ .Values.controlPlane.morcAddress }}
-            - name: MAPI_ADDR
-              value: {{ .Values.controlPlane.mapiAddress }}
-            - name: MLOG_ADDR
-              value: {{ .Values.controlPlane.mlogAddress }}
-            - name: MINT_ADDR
-              value: {{ .Values.controlPlane.mintAddress }}
+            - name: ENABLE_STATIC_MODE
+              value: "true"
             - name: RUNS_NAMESPACE
               value: {{ include "runs-namespace" . }}
-            - name: SERVICE_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "compute-plane.service-api-key.name" . }}
-                  key: serviceApiKey
-            - name: RUNS_SERVICE_ACCOUNT_NAME
-              value: {{ include "runs.service-account-name" . }}
-            - name: DEPLOYMENT_ENV
-              value: {{ .Values.env }}
+            - name: MINT_ADDR
+              value: {{ .Values.controlPlane.mintAddress }}
+            - name: MORC_ADDR
+              value: {{ .Values.controlPlane.morcAddress }}
             - name: JWT_FILEPATH
               value: /mnt/jwtRefresh/accessToken
-            - name: DISABLE_MLOG_AGENT
-              value: {{ not .Values.worker.enableRunLogging | quote }}
-            - name: DISABLE_MINT_AGENT
-              value: "true"
             {{- if .Values.localDevelopment.enabled }}
             - name: LOCAL
               value: "true"
             {{- end }}
-            {{- include "compute-plane.imagePullSecretsEnv" . | nindent 12 }}
           resources:
-            {{- toYaml .Values.worker.containers.worker.resources | nindent 12 }}
+            {{- toYaml .Values.mintAgent.containers.mintAgent.resources | nindent 12 }}
           volumeMounts:
             - name: service-jwt
               mountPath: /mnt/jwtRefresh
@@ -86,7 +71,7 @@ spec:
               mountPath: /go/pkg
             {{- end }}
           {{- if .Values.localDevelopment.enabled }}
-          command: ["go", "run", "worker/cmd/main.go"]
+          command: ["go", "run", "mint_agent/cmd/main.go"]
           workingDir: /go/mcloud
           {{- end }}
       volumes:
@@ -104,15 +89,16 @@ spec:
         - name: service-jwt
           secret:
             secretName: {{ include "compute-plane.service-jwt.name" . }}
-      {{- with .Values.worker.affinity }}
+      {{- with .Values.mintAgent.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.worker.nodeSelector }}
+      {{- with .Values.mintAgent.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.worker.tolerations }}
+      {{- with .Values.mintAgent.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}

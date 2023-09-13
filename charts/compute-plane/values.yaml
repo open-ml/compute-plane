@@ -52,12 +52,6 @@ worker:
   # users to request and stream logs from their runs.
   enableRunLogging: true
 
-  # Enables users to connect to and interactively run commands within containers
-  # spawned for training runs. Note that this creates a tunnel from the Compute
-  # Plane to the Control Plane, enabling the Control Plane to establish a TCP
-  # connection with the Compute Plane.
-  enableRunInteractivity: true
-
   image:
     repository: mosaicml/morc-worker # TODO: change to mosaicml/worker
 
@@ -306,6 +300,68 @@ jwtRefresh:
   affinity: {}
 
   # Priority class for the jwtRefresh Pod.
+  # See: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
+  priorityClassName: ""
+
+# The MINT agent is a Kubernetes deployment that enables end-users to connect
+# interactively to workloads in the Compute Plane. This is facilitated by a
+# reverse tunnel between the MINT agent and the MosaicML Control Plane.
+mintAgent:
+  # Set to false to disable the MINT agent. This will disable long-lived tunnels
+  # between the Control Plane and the Compute Plane, preventing users from
+  # connecting to their workloads.
+  enabled: true
+
+  image:
+    repository: mosaicml/mint-agent
+
+    # While in beta, we recommend using tag=latest with pullPolicy=Always to
+    # ensure that the compute plane is always up to date with the latest
+    # features and bug fixes.
+    tag: latest
+    pullPolicy: Always
+
+  # Configuration for the ServiceAccount and attached RBAC roles used by the
+  # MINT agent.
+  rbac:
+    # Create the needed RBAC roles and ServiceAccount.
+    create: true
+
+    # The name of an existing ServiceAccount to use. Ignored if
+    # `rbac.create: true`, otherwise required.
+    serviceAccountName: ""
+
+    # Annotations to attach to the created ServiceAccount. Ignored if
+    # `rbac.create: false`.
+    serviceAccountAnnotations: {}
+
+  containers:
+    mintAgent:
+      # Resource requests and limits for the MINT agent main container.
+      # See: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+      resources: {} # TODO: figure out some defaults for the mintAgent
+
+      # Security context for the MINT agent main container.
+      # See: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+      securityContext: {}
+
+  # Security context for the MINT agent Pod.
+  # See: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  securityContext: {}
+
+  # Node selector for scheduling the MINT agent Pod.
+  # See: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+  nodeSelector: {}
+
+  # Tolerations for scheduling the MINT agent Pod.
+  # See: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  tolerations: []
+
+  # Affinity configuration for scheduling the MINT agent Pod.
+  # See: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  affinity: {}
+
+  # Priority class for the MINT agent Pod.
   # See: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
   priorityClassName: ""
 
